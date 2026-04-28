@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta Ads Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #18181f;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --accent: #4f6ef7;
+    --accent2: #7c3aed;
+    --green: #22c55e;
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --cyan: #06b6d4;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* LOGIN SCREEN */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: radial-gradient(ellipse at 30% 20%, rgba(79,110,247,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(124,58,237,0.06) 0%, transparent 50%);
+  }
+
+  .login-card {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 3rem;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .login-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2.5rem;
+  }
+
+  .login-logo-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .login-logo span {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+
+  .login-card h2 {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.5rem;
+  }
+
+  .login-card p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  .field {
+    margin-bottom: 1.25rem;
+  }
+
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .field input, .field select {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .field input:focus, .field select:focus {
+    border-color: var(--accent);
+  }
+
+  .field input::placeholder {
+    color: var(--muted);
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.85rem;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 0.5rem;
+  }
+
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.99); }
+
+  .help-link {
+    display: block;
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .help-link a { color: var(--accent); text-decoration: none; }
+
+  /* DASHBOARD */
+  #dashboard { display: none; }
+
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .account-badge {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 0.4rem 0.85rem;
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .btn-logout {
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 0.4rem 0.85rem;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  .main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* CONTROLS */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .controls h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    flex: 1;
+  }
+
+  .period-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.85rem;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .period-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .btn-refresh {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 0.4rem 0.85rem;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+
+  .btn-refresh:hover { border-color: var(--accent); }
+
+  /* METRICS CARDS */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .metric-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+
+  .metric-card:hover { border-color: var(--border2); }
+
+  .metric-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 0.6rem;
+  }
+
+  .metric-value {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .metric-change {
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .metric-change.up { color: var(--green); }
+  .metric-change.down { color: var(--red); }
+  .metric-change.neutral { color: var(--muted); }
+
+  /* CHARTS ROW */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .charts-row { grid-template-columns: 1fr; }
+  }
+
+  .chart-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+  }
+
+  .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  .chart-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .chart-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* CAMPAIGNS TABLE */
+  .table-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-title {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .status-active { background: rgba(34,197,94,0.15); color: var(--green); }
+  .status-paused { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .status-inactive { background: rgba(107,107,128,0.15); color: var(--muted); }
+
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,15,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    gap: 1rem;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .error-msg {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 10px;
+    padding: 1rem;
+    color: #fca5a5;
+    font-size: 13px;
+    margin-top: 1rem;
+    display: none;
+  }
+
+  .last-update {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .legend-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">📊</div>
+      <span>Meta Ads Dashboard</span>
+    </div>
+    <h2>Conectar conta</h2>
+    <p>Insira suas credenciais do Meta Ads para visualizar os dados das campanhas em tempo real.</p>
+
+    <div class="field">
+      <label>Access Token</label>
+      <input type="password" id="token-input" placeholder="EAAxxxxxxxxxxxxxxxx..." />
+    </div>
+
+    <div class="field">
+      <label>Ad Account ID</label>
+      <input type="text" id="account-input" placeholder="act_123456789" />
+    </div>
+
+    <div class="field">
+      <label>Período padrão</label>
+      <select id="period-select">
+        <option value="7">Últimos 7 dias</option>
+        <option value="14">Últimos 14 dias</option>
+        <option value="30" selected>Últimos 30 dias</option>
+      </select>
+    </div>
+
+    <button class="btn-primary" onclick="connect()">Conectar e ver dados</button>
+
+    <div class="error-msg" id="login-error"></div>
+
+    <span class="help-link">
+      Não sabe o token? <a href="https://developers.facebook.com/tools/explorer/" target="_blank">Gerar no Meta for Developers →</a>
+    </span>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading" style="display:none">
+  <div class="spinner"></div>
+  <div class="loading-text">Carregando dados das campanhas...</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <header>
+    <div class="header-logo">
+      <span>📊 Meta Ads Dashboard</span>
+      <div class="logo-dot"></div>
+    </div>
+    <div class="header-right">
+      <div class="account-badge" id="header-account"></div>
+      <span class="last-update" id="last-update"></span>
+      <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="controls">
+      <h1>Visão geral das campanhas</h1>
+      <button class="period-btn" onclick="setPeriod(7, this)">7 dias</button>
+      <button class="period-btn" onclick="setPeriod(14, this)">14 dias</button>
+      <button class="period-btn active" onclick="setPeriod(30, this)">30 dias</button>
+      <button class="btn-refresh" onclick="loadData()">↻ Atualizar</button>
+    </div>
+
+    <!-- METRIC CARDS -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Gasto total</div>
+        <div class="metric-value" id="m-spend">—</div>
+        <div class="metric-change neutral" id="m-spend-c">Carregando...</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Impressões</div>
+        <div class="metric-value" id="m-impr">—</div>
+        <div class="metric-change neutral" id="m-impr-c">Carregando...</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Cliques</div>
+        <div class="metric-value" id="m-clicks">—</div>
+        <div class="metric-change neutral" id="m-clicks-c">Carregando...</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">CTR</div>
+        <div class="metric-value" id="m-ctr">—</div>
+        <div class="metric-change neutral" id="m-ctr-c">Carregando...</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">CPC</div>
+        <div class="metric-value" id="m-cpc">—</div>
+        <div class="metric-change neutral" id="m-cpc-c">Carregando...</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">CPM</div>
+        <div class="metric-value" id="m-cpm">—</div>
+        <div class="metric-change neutral" id="m-cpm-c">Carregando...</div>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Gasto ao longo do tempo</div>
+            <div class="chart-subtitle">Valor investido por dia (R$)</div>
+          </div>
+        </div>
+        <div class="legend-row">
+          <div class="legend-item"><div class="legend-dot" style="background:#4f6ef7"></div>Gasto diário</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#7c3aed;border-style:dashed;border:1px dashed #7c3aed;background:transparent;"></div>Cliques</div>
+        </div>
+        <div style="position:relative;height:220px">
+          <canvas id="spendChart" role="img" aria-label="Gráfico de gasto diário por período selecionado"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Distribuição por campanha</div>
+            <div class="chart-subtitle">% do budget total</div>
+          </div>
+        </div>
+        <div style="position:relative;height:220px">
+          <canvas id="pieChart" role="img" aria-label="Distribuição de gasto por campanha"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAMPAIGNS TABLE -->
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Campanhas ativas</div>
+        <div class="last-update" id="camp-count"></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Campanha</th>
+              <th>Status</th>
+              <th>Gasto</th>
+              <th>Impressões</th>
+              <th>Cliques</th>
+              <th>CTR</th>
+              <th>CPC</th>
+              <th>CPM</th>
+            </tr>
+          </thead>
+          <tbody id="campaigns-table">
+            <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">Carregando campanhas...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let TOKEN = '', ACCOUNT = '', DAYS = 30;
+let spendChart = null, pieChart = null;
+
+function connect() {
+  TOKEN = document.getElementById('token-input').value.trim();
+  ACCOUNT = document.getElementById('account-input').value.trim();
+  DAYS = parseInt(document.getElementById('period-select').value);
+
+  if (!TOKEN || !ACCOUNT) {
+    showError('login-error', 'Preencha o Token e o Account ID.');
+    return;
+  }
+
+  if (!ACCOUNT.startsWith('act_')) {
+    ACCOUNT = 'act_' + ACCOUNT;
+  }
+
+  document.getElementById('login-error').style.display = 'none';
+  loadData();
+}
+
+function logout() {
+  TOKEN = ''; ACCOUNT = '';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function setPeriod(days, btn) {
+  DAYS = days;
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadData();
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function dateRange() {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - DAYS);
+  const fmt = d => d.toISOString().split('T')[0];
+  return { since: fmt(start), until: fmt(end) };
+}
+
+async function loadData() {
+  document.getElementById('loading').style.display = 'flex';
+  const { since, until } = dateRange();
+
+  try {
+    const [insightsRes, campaignsRes] = await Promise.all([
+      fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/insights?fields=spend,impressions,clicks,ctr,cpc,cpm&date_preset=last_${DAYS}_days&access_token=${TOKEN}`),
+      fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/campaigns?fields=name,status,insights{spend,impressions,clicks,ctr,cpc,cpm}&date_preset=last_${DAYS}_days&limit=50&access_token=${TOKEN}`)
+    ]);
+
+    const insights = await insightsRes.json();
+    const campaigns = await campaignsRes.json();
+
+    if (insights.error) throw new Error(insights.error.message);
+    if (campaigns.error) throw new Error(campaigns.error.message);
+
+    renderDashboard(insights, campaigns);
+    loadDailyData();
+
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    showError('login-error', 'Erro: ' + err.message + '. Verifique o token e o Account ID.');
+  }
+}
+
+async function loadDailyData() {
+  const { since, until } = dateRange();
+  try {
+    const res = await fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/insights?fields=spend,clicks&time_increment=1&date_preset=last_${DAYS}_days&access_token=${TOKEN}`);
+    const data = await res.json();
+    if (data.data) renderSpendChart(data.data);
+  } catch(e) {}
+}
+
+function fmt(n, type) {
+  const num = parseFloat(n) || 0;
+  if (type === 'currency') return 'R$ ' + num.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  if (type === 'percent') return num.toFixed(2) + '%';
+  if (type === 'int') return Math.round(num).toLocaleString('pt-BR');
+  return num.toFixed(2);
+}
+
+function renderDashboard(insights, campaigns) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('loading').style.display = 'none';
+
+  const d = insights.data && insights.data[0] ? insights.data[0] : {};
+  document.getElementById('header-account').textContent = ACCOUNT;
+  document.getElementById('last-update').textContent = 'Atualizado: ' + new Date().toLocaleTimeString('pt-BR');
+
+  document.getElementById('m-spend').textContent = fmt(d.spend, 'currency');
+  document.getElementById('m-impr').textContent = fmt(d.impressions, 'int');
+  document.getElementById('m-clicks').textContent = fmt(d.clicks, 'int');
+  document.getElementById('m-ctr').textContent = fmt(d.ctr, 'percent');
+  document.getElementById('m-cpc').textContent = fmt(d.cpc, 'currency');
+  document.getElementById('m-cpm').textContent = fmt(d.cpm, 'currency');
+
+  renderCampaignsTable(campaigns.data || []);
+  renderPieChart(campaigns.data || []);
+}
+
+function renderCampaignsTable(camps) {
+  const tbody = document.getElementById('campaigns-table');
+
+  if (!camps.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">Nenhuma campanha encontrada neste período.</td></tr>';
+    return;
+  }
+
+  document.getElementById('camp-count').textContent = camps.length + ' campanhas';
+
+  tbody.innerHTML = camps.map(c => {
+    const ins = c.insights && c.insights.data && c.insights.data[0] ? c.insights.data[0] : {};
+    const statusClass = c.status === 'ACTIVE' ? 'status-active' : c.status === 'PAUSED' ? 'status-paused' : 'status-inactive';
+    const statusLabel = c.status === 'ACTIVE' ? 'Ativa' : c.status === 'PAUSED' ? 'Pausada' : 'Inativa';
+    return `<tr>
+      <td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis">${c.name}</td>
+      <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+      <td style="font-family:'DM Mono',monospace">${fmt(ins.spend, 'currency')}</td>
+      <td>${fmt(ins.impressions, 'int')}</td>
+      <td>${fmt(ins.clicks, 'int')}</td>
+      <td>${fmt(ins.ctr, 'percent')}</td>
+      <td style="font-family:'DM Mono',monospace">${fmt(ins.cpc, 'currency')}</td>
+      <td style="font-family:'DM Mono',monospace">${fmt(ins.cpm, 'currency')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSpendChart(daily) {
+  if (spendChart) { spendChart.destroy(); spendChart = null; }
+
+  const labels = daily.map(d => {
+    const dt = new Date(d.date_start);
+    return (dt.getDate()) + '/' + (dt.getMonth() + 1);
+  });
+  const spends = daily.map(d => parseFloat(d.spend) || 0);
+  const clicks = daily.map(d => parseInt(d.clicks) || 0);
+
+  const ctx = document.getElementById('spendChart').getContext('2d');
+  spendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Gasto (R$)',
+          data: spends,
+          borderColor: '#4f6ef7',
+          backgroundColor: 'rgba(79,110,247,0.08)',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: '#4f6ef7',
+          fill: true,
+          tension: 0.4,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Cliques',
+          data: clicks,
+          borderColor: '#7c3aed',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [5, 3],
+          pointRadius: 3,
+          pointBackgroundColor: '#7c3aed',
+          fill: false,
+          tension: 0.4,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          ticks: { color: '#6b6b80', font: { size: 11 }, maxRotation: 0 },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        y: {
+          position: 'left',
+          ticks: { color: '#6b6b80', font: { size: 11 }, callback: v => 'R$' + v.toFixed(0) },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        y1: {
+          position: 'right',
+          ticks: { color: '#7c3aed', font: { size: 11 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+function renderPieChart(camps) {
+  if (pieChart) { pieChart.destroy(); pieChart = null; }
+
+  const withSpend = camps
+    .filter(c => c.insights && c.insights.data && c.insights.data[0])
+    .map(c => ({ name: c.name, spend: parseFloat(c.insights.data[0].spend) || 0 }))
+    .filter(c => c.spend > 0)
+    .sort((a, b) => b.spend - a.spend)
+    .slice(0, 6);
+
+  if (!withSpend.length) return;
+
+  const colors = ['#4f6ef7','#7c3aed','#06b6d4','#22c55e','#f59e0b','#ef4444'];
+  const ctx = document.getElementById('pieChart').getContext('2d');
+
+  pieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: withSpend.map(c => c.name.length > 20 ? c.name.substring(0,20)+'...' : c.name),
+      datasets: [{
+        data: withSpend.map(c => c.spend.toFixed(2)),
+        backgroundColor: colors,
+        borderColor: '#111118',
+        borderWidth: 3,
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#6b6b80',
+            font: { size: 11 },
+            boxWidth: 10,
+            padding: 12,
+            usePointStyle: true
+          }
+        }
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
