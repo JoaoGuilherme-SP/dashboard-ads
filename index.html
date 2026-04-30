@@ -709,8 +709,8 @@ async function loadData() {
 
   try {
     const [insightsRes, campaignsRes] = await Promise.all([
-      fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/insights?fields=spend,impressions,clicks,ctr,cpc,cpm&date_preset=last_${DAYS}_days&access_token=${TOKEN}`),
-      fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/campaigns?fields=name,status,insights{spend,impressions,clicks,ctr,cpc,cpm}&date_preset=last_${DAYS}_days&limit=50&access_token=${TOKEN}`)
+      fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/insights?fields=spend,impressions,clicks,ctr,cpc,cpm&date_preset=last_${DAYS}d&access_token=${TOKEN}`),
+      fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/campaigns?fields=name,status,insights{spend,impressions,clicks,ctr,cpc,cpm}&date_preset=last_${DAYS}d&limit=50&access_token=${TOKEN}`)
     ]);
 
     const insights = await insightsRes.json();
@@ -732,7 +732,7 @@ async function loadData() {
 async function loadDailyData() {
   const { since, until } = dateRange();
   try {
-    const res = await fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/insights?fields=spend,clicks&time_increment=1&date_preset=last_${DAYS}_days&access_token=${TOKEN}`);
+    const res = await fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/insights?fields=spend,clicks&time_increment=1&date_preset=last_${DAYS}d&access_token=${TOKEN}`);
     const data = await res.json();
     if (data.data) renderSpendChart(data.data);
   } catch(e) {}
