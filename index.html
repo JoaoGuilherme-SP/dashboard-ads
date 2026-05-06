@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel de Campanhas • Selfit</title>
+<title>Selfit Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -181,7 +181,7 @@ footer span{color:var(--accent)}
   <div class="login-wrap">
     <div class="login-brand">
       <div class="login-icon">📊</div>
-      <div class="login-brand-text">Painel <span>• Campanhas</span></div>
+      <div class="login-brand-text">Selfit <span>Dashboard</span></div>
     </div>
     <div class="login-card">
       <h2>Acessar painel</h2>
@@ -216,7 +216,7 @@ footer span{color:var(--accent)}
   <header>
     <div class="header-brand">
       <div class="header-icon">📊</div>
-      <div class="header-name">Painel de Resultados <span>• Meta Ads</span></div>
+      <div class="header-name">Selfit Dashboard <span>• Meta Ads</span></div>
       <div class="live-dot" title="Dados ao vivo"></div>
     </div>
     <div class="header-right">
@@ -276,6 +276,30 @@ footer span{color:var(--accent)}
           <div class="ccard-total" id="totalImpr">—</div>
         </div>
         <div class="chart-wrap" style="height:200px"><canvas id="cImpr"></canvas></div>
+      </div>
+    </div>
+
+    <!-- SECTION: CPC / CPM / Invest -->
+    <div class="section-title">💡 Eficiência dia a dia</div>
+    <div class="charts-row-3">
+      <div class="ccard">
+        <div class="ccard-head">
+          <div><div class="ccard-title">Investimento por dia</div><div class="ccard-sub">Quanto foi gasto a cada dia (R$)</div></div>
+          <div class="ccard-total" id="totalSpend2">—</div>
+        </div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cInvestCol"></canvas></div>
+      </div>
+      <div class="ccard">
+        <div class="ccard-head">
+          <div><div class="ccard-title">CPC por dia</div><div class="ccard-sub">Custo médio por clique a cada dia (R$)</div></div>
+        </div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cCpcCol"></canvas></div>
+      </div>
+      <div class="ccard">
+        <div class="ccard-head">
+          <div><div class="ccard-title">CPM por dia</div><div class="ccard-sub">Custo por 1.000 exibições a cada dia (R$)</div></div>
+        </div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cCpmCol"></canvas></div>
       </div>
     </div>
 
@@ -440,7 +464,7 @@ async function loadAll(){
     const [sumRes,campRes,dailyRes]=await Promise.all([
       fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/insights?fields=${fields}${dp}&access_token=${TOKEN}`),
       fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/campaigns?fields=name,status,insights{spend,impressions,clicks,ctr,cpc,cpm}${dp.replace('&','&date_preset=').includes('since')?'':'&date_preset=last_'+PERIOD+'d'}&limit=100&access_token=${TOKEN}`),
-      fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/insights?fields=spend,clicks,impressions&time_increment=1${dp}&access_token=${TOKEN}`)
+      fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/insights?fields=spend,clicks,impressions,cpc,cpm&time_increment=1${dp}&access_token=${TOKEN}`)
     ]);
 
     // Campaign fetch with proper date handling
@@ -555,6 +579,18 @@ function renderDaily(data){
 
   // Bar: Impressions
   mkChart('cImpr',{type:'bar',data:{labels,datasets:[{data:imprs,backgroundColor:'rgba(56,217,245,0.65)',borderColor:'rgba(56,217,245,1)',borderWidth:0,borderRadius:4,borderSkipped:false}]},options:{...CHART_DEFAULTS,scales:{...CHART_DEFAULTS.scales,y:{...CHART_DEFAULTS.scales.y,ticks:{...CHART_DEFAULTS.scales.y.ticks,callback:v=>intFmt(v)}}}}});
+
+  // Column: Investment
+  if(document.getElementById('totalSpend2')) document.getElementById('totalSpend2').textContent='R$ '+num(totalSpend,2);
+  mkChart('cInvestCol',{type:'bar',data:{labels,datasets:[{data:spends,backgroundColor:'rgba(91,115,255,0.75)',borderColor:'#5b73ff',borderWidth:1,borderRadius:6,borderSkipped:false}]},options:{...CHART_DEFAULTS,scales:{x:{...CHART_DEFAULTS.scales.x},y:{...CHART_DEFAULTS.scales.y,ticks:{...CHART_DEFAULTS.scales.y.ticks,callback:v=>'R$'+num(v,0)}}}}});
+
+  // Column: CPC
+  const cpcs=data.map(d=>parseFloat(d.cpc)||0);
+  mkChart('cCpcCol',{type:'bar',data:{labels,datasets:[{data:cpcs,backgroundColor:'rgba(255,181,71,0.75)',borderColor:'#ffb547',borderWidth:1,borderRadius:6,borderSkipped:false}]},options:{...CHART_DEFAULTS,scales:{x:{...CHART_DEFAULTS.scales.x},y:{...CHART_DEFAULTS.scales.y,ticks:{...CHART_DEFAULTS.scales.y.ticks,callback:v=>'R$'+num(v,2)}}}}});
+
+  // Column: CPM
+  const cpms=data.map(d=>parseFloat(d.cpm)||0);
+  mkChart('cCpmCol',{type:'bar',data:{labels,datasets:[{data:cpms,backgroundColor:'rgba(247,37,133,0.75)',borderColor:'#f72585',borderWidth:1,borderRadius:6,borderSkipped:false}]},options:{...CHART_DEFAULTS,scales:{x:{...CHART_DEFAULTS.scales.x},y:{...CHART_DEFAULTS.scales.y,ticks:{...CHART_DEFAULTS.scales.y.ticks,callback:v=>'R$'+num(v,2)}}}}});
 }
 
 // ─── CAMPAIGN CHARTS & TABLE ──────────────────────────────────────────────────
