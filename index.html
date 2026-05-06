@@ -303,35 +303,12 @@ footer span{color:var(--accent)}
       </div>
     </div>
 
-    <!-- SECTION: Por campanha -->
-    <div class="section-title">🎯 Comparativo por campanha</div>
-    <div class="charts-row">
-      <div class="ccard">
-        <div class="ccard-head">
-          <div><div class="ccard-title">Investimento por campanha</div><div class="ccard-sub">Qual campanha recebeu mais verba</div></div>
-        </div>
-        <div class="chart-wrap" style="height:240px"><canvas id="cCampSpend"></canvas></div>
-      </div>
-      <div class="ccard">
-        <div class="ccard-head">
-          <div><div class="ccard-title">Cliques por campanha</div><div class="ccard-sub">Qual campanha gerou mais interesse</div></div>
-        </div>
-        <div class="chart-wrap" style="height:240px"><canvas id="cCampClicks"></canvas></div>
-      </div>
-    </div>
-
-    <div class="charts-row">
+    <div class="chart-full">
       <div class="ccard">
         <div class="ccard-head">
           <div><div class="ccard-title">Distribuição do orçamento</div><div class="ccard-sub">% do total investido por campanha</div></div>
         </div>
         <div class="chart-wrap" style="height:240px"><canvas id="cPie"></canvas></div>
-      </div>
-      <div class="ccard">
-        <div class="ccard-head">
-          <div><div class="ccard-title">CTR por campanha</div><div class="ccard-sub">% de pessoas que clicaram após ver</div></div>
-        </div>
-        <div class="chart-wrap" style="height:240px"><canvas id="cCampCtr"></canvas></div>
       </div>
     </div>
 
@@ -425,9 +402,7 @@ const pct=(v)=>parseFloat(v||0).toFixed(2).replace('.',',')+'%';
 
 function datePreset(){
   if(PERIOD==='all'){
-    const s=new Date('2020-01-01');
-    const e=new Date();
-    return `&since=${s.toISOString().split('T')[0]}&until=${e.toISOString().split('T')[0]}`;
+    return `&date_preset=maximum`;
   }
   return `&date_preset=last_${PERIOD}d`;
 }
@@ -463,20 +438,11 @@ async function loadAll(){
     const fields='spend,impressions,clicks,ctr,cpc,cpm,reach,frequency';
     const [sumRes,campRes,dailyRes]=await Promise.all([
       fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/insights?fields=${fields}${dp}&access_token=${TOKEN}`),
-      fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/campaigns?fields=name,status,insights{spend,impressions,clicks,ctr,cpc,cpm}${dp.replace('&','&date_preset=').includes('since')?'':'&date_preset=last_'+PERIOD+'d'}&limit=100&access_token=${TOKEN}`),
+      fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/campaigns?fields=name,status,insights{spend,impressions,clicks,ctr,cpc,cpm}${dp}&limit=100&access_token=${TOKEN}`),
       fetch(`https://graph.facebook.com/v19.0/${ACCOUNT}/insights?fields=spend,clicks,impressions,cpc,cpm&time_increment=1${dp}&access_token=${TOKEN}`)
     ]);
 
-    // Campaign fetch with proper date handling
-    let campUrl;
-    if(PERIOD==='all'){
-      campUrl=`https://graph.facebook.com/v19.0/${ACCOUNT}/campaigns?fields=name,status,insights.time_range({"since":"2020-01-01","until":"${new Date().toISOString().split('T')[0]}"}){spend,impressions,clicks,ctr,cpc,cpm}&limit=100&access_token=${TOKEN}`;
-    } else {
-      campUrl=`https://graph.facebook.com/v19.0/${ACCOUNT}/campaigns?fields=name,status,insights{spend,impressions,clicks,ctr,cpc,cpm}&date_preset=last_${PERIOD}d&limit=100&access_token=${TOKEN}`;
-    }
-    const campRes2=await fetch(campUrl);
-
-    const [sum,camp,daily,camp2]=[await sumRes.json(),await campRes.json(),await dailyRes.json(),await campRes2.json()];
+    const [sum,camp,daily]=[await sumRes.json(),await campRes.json(),await dailyRes.json()];
 
     if(sum.error) throw new Error(sum.error.message);
 
@@ -489,7 +455,7 @@ async function loadAll(){
     const data=sum.data&&sum.data[0]?sum.data[0]:{};
     renderMetrics(data);
     renderDaily(daily.data||[]);
-    renderCampaigns(camp2.data||camp.data||[]);
+    renderCampaigns(camp.data||[]);
 
   }catch(e){
     showLoad(false);
@@ -600,22 +566,11 @@ function renderCampaigns(camps){
   const withData=camps.filter(c=>c.insights&&c.insights.data&&c.insights.data[0]);
   const labels=withData.map(c=>c.name.length>22?c.name.substring(0,22)+'…':c.name);
   const spends=withData.map(c=>parseFloat(c.insights.data[0].spend)||0);
-  const clicks2=withData.map(c=>parseInt(c.insights.data[0].clicks)||0);
-  const ctrs=withData.map(c=>parseFloat(c.insights.data[0].ctr)||0);
 
-  // Bar: Spend by campaign
-  mkChart('cCampSpend',{type:'bar',data:{labels,datasets:[{data:spends,backgroundColor:CAMP_COLORS.map(c=>c+'cc'),borderColor:CAMP_COLORS,borderWidth:1,borderRadius:6,borderSkipped:false}]},options:{...CHART_DEFAULTS,indexAxis:'y',scales:{x:{...CHART_DEFAULTS.scales.x,ticks:{...CHART_DEFAULTS.scales.x.ticks,callback:v=>'R$'+num(v,0)}},y:{...CHART_DEFAULTS.scales.y}}}});
-
-  // Bar: Clicks by campaign
-  mkChart('cCampClicks',{type:'bar',data:{labels,datasets:[{data:clicks2,backgroundColor:CAMP_COLORS.map((_,i)=>CAMP_COLORS[(i+2)%CAMP_COLORS.length]+'cc'),borderColor:CAMP_COLORS.map((_,i)=>CAMP_COLORS[(i+2)%CAMP_COLORS.length]),borderWidth:1,borderRadius:6,borderSkipped:false}]},options:{...CHART_DEFAULTS,indexAxis:'y'}});
-
-  // Pie: Budget distribution
+  // Pie: Budget distribution (Now moved to the Eficiência dia a dia section)
   if(withData.length){
     mkChart('cPie',{type:'doughnut',data:{labels,datasets:[{data:spends,backgroundColor:CAMP_COLORS,borderColor:CAMP_COLORS.map(()=>'rgba(14,16,24,.8)'),borderWidth:3,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#7b7f96',font:{size:11},boxWidth:10,padding:14,usePointStyle:true}},tooltip:{backgroundColor:'rgba(14,16,24,.95)',borderColor:'rgba(255,255,255,.08)',borderWidth:1,titleColor:'#eceef5',bodyColor:'#7b7f96',padding:12,cornerRadius:10}}}});
   }
-
-  // Bar: CTR by campaign
-  mkChart('cCampCtr',{type:'bar',data:{labels,datasets:[{data:ctrs,backgroundColor:CAMP_COLORS.map((_,i)=>CAMP_COLORS[(i+4)%CAMP_COLORS.length]+'cc'),borderColor:CAMP_COLORS.map((_,i)=>CAMP_COLORS[(i+4)%CAMP_COLORS.length]),borderWidth:1,borderRadius:6,borderSkipped:false}]},options:{...CHART_DEFAULTS,indexAxis:'y',scales:{x:{...CHART_DEFAULTS.scales.x,ticks:{...CHART_DEFAULTS.scales.x.ticks,callback:v=>v.toFixed(1)+'%'}},y:{...CHART_DEFAULTS.scales.y}}}});
 
   // Table
   document.getElementById('campCount').textContent=camps.length+' campanhas encontradas';
